@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: goapi
+      MYSQL_ROOT_PASSWORD: strong
+      MYSQL_USER: evg
+      MYSQL_PASSWORD: strong
+    ports:
+      - 13306:3306
+    volumes:
+      - ./db/data:/var/lib/mysql
+#       - ./data/my.cnf:/etc/mysql/my.cnf
+#      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - go-rest-api-net
+
+networks:
+  go-rest-api-net:
+    driver: bridge
