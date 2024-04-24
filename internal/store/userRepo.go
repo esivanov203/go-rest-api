@@ -14,6 +14,9 @@ func NewUserRepo(store *Store) *UserRepo {
 }
 
 func (r *UserRepo) Create(u *model.User) (*model.User, error) {
+	if err := u.Validate(); err != nil {
+		return nil, err
+	}
 	if err := u.EncryptPwd(); err != nil {
 		return nil, err
 	}
