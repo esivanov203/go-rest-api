@@ -14,6 +14,10 @@ func NewUserRepo(store *Store) *UserRepo {
 }
 
 func (r *UserRepo) Create(u *model.User) (*model.User, error) {
+	if err := u.EncryptPwd(); err != nil {
+		return nil, err
+	}
+
 	query := "INSERT INTO users (email, password) VALUES (?, ?)"
 	res, err := r.store.db.ExecContext(context.Background(), query, u.Email, u.Password)
 	if err != nil {
