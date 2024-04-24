@@ -32,7 +32,7 @@ func (s *Store) Close() {
 	s.db.Close()
 }
 
-func (s *Store) getUserRepo() *UserRepo {
+func (s *Store) GetUserRepo() *UserRepo {
 	if s.userRepo == nil {
 		s.userRepo = NewUserRepo(s)
 	}
