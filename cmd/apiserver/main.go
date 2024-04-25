@@ -21,8 +21,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Config reading error: " + err.Error())
 	}
-	s := apiserver.New(cfg)
-	if err = s.Run(); err != nil {
+	if err = apiserver.Start(cfg); err != nil {
 		log.Fatal("Server runnig error:" + err.Error())
 	}
 }

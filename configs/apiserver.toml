@@ -1,5 +1,3 @@
 bind_addr = ":8080"
 log_level = "debug"
-
-[store]
 db_url = "evg:strong@tcp(localhost:13306)/goapi"

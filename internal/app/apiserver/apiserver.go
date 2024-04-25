@@ -1,39 +1,34 @@
 package apiserver
 
 import (
-	"github.com/esivanov203/go-rest-api/internal/store"
-	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
+	"database/sql"
+	"github.com/esivanov203/go-rest-api/internal/store/sqlstore"
 	"net/http"
 )
 
-type ApiServer struct {
-	config *Config
-	logger *logrus.Logger
-	router *mux.Router
-	store  *store.Store
-}
-
-func New(config *Config) *ApiServer {
-	return &ApiServer{
-		config: config,
-		logger: logrus.New(),
-		router: mux.NewRouter(),
-	}
-}
-
-func (s *ApiServer) Run() error {
-	if err := s.configureLogger(); err != nil {
+func Start(config *Config) error {
+	db, err := newDb(config.DbUrl)
+	if err != nil {
 		return err
 	}
+	defer db.Close()
 
-	s.configureRouter()
+	store := sqlstore.New(db)
+	srv := newServer(store)
 
-	if err := s.configureStore(); err != nil {
-		return err
+	return http.ListenAndServe(config.BindAddr, srv)
+}
+
+func newDb(dbUrl string) (*sql.DB, error) {
+	db, err := sql.Open("mysql", dbUrl)
+	if err != nil {
+		return nil, err
 	}
 
-	s.logger.Info("Starting API server")
+	err = db.Ping()
+	if err != nil {
+		return nil, err
+	}
 
-	return http.ListenAndServe(s.config.BindAddr, s.router)
+	return db, nil
 }
