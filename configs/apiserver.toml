@@ -1,3 +1,4 @@
 bind_addr = ":8080"
 log_level = "debug"
 db_url = "evg:strong@tcp(localhost:13306)/goapi"
+session_secret = "secret"

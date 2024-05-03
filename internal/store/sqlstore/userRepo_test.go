@@ -34,5 +34,6 @@ func TestUserRepo_FindByID(t *testing.T) {
 
 	u, err := s.GetUserRepo().FindByEmail(ue.Email)
 	assert.NoError(t, err)
+	u.Sanitize()
 	assert.Equal(t, ue, u)
 }

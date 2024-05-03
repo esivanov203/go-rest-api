@@ -31,3 +31,11 @@ func (u *User) Validate() error {
 		validation.Field(&u.Password, validation.Required, validation.Length(3, 100)),
 	)
 }
+
+func (u *User) Sanitize() {
+	u.Password = ""
+}
+
+func (u *User) ComparePassword(password string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)) == nil
+}

@@ -35,6 +35,8 @@ func (r *UserRepo) Create(u *model.User) error {
 	}
 
 	u.ID = int(id)
+	u.Sanitize()
+
 	return nil
 }
 
