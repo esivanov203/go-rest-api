@@ -18,7 +18,7 @@ func TestUserRepo_Create(t *testing.T) {
 	assert.NotNil(t, u)
 }
 
-func TestUserRepo_FindByID(t *testing.T) {
+func TestUserRepo_FindByEmail(t *testing.T) {
 	s := teststore.New()
 	ue := model.GetTestUser(t)
 
@@ -29,6 +29,22 @@ func TestUserRepo_FindByID(t *testing.T) {
 	assert.NoError(t, err)
 
 	u, err := s.GetUserRepo().FindByEmail(ue.Email)
+
+	assert.NoError(t, err)
+	assert.Equal(t, ue, u)
+}
+
+func TestUserRepo_FindById(t *testing.T) {
+	s := teststore.New()
+	ue := model.GetTestUser(t)
+
+	_, err := s.GetUserRepo().Find(63434)
+	assert.EqualError(t, err, store.ErrRecordNotFound.Error())
+
+	err = s.GetUserRepo().Create(ue)
+	assert.NoError(t, err)
+
+	u, err := s.GetUserRepo().Find(ue.ID)
 
 	assert.NoError(t, err)
 	assert.Equal(t, ue, u)

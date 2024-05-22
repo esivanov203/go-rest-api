@@ -53,3 +53,17 @@ func (r *UserRepo) FindByEmail(email string) (*model.User, error) {
 	}
 	return u, nil
 }
+
+func (r *UserRepo) Find(id int) (*model.User, error) {
+	u := &model.User{}
+	query := "SELECT id, email, is_admin FROM users WHERE id = ?"
+	if err := r.store.db.QueryRowContext(
+		context.Background(), query, id,
+	).Scan(&u.ID, &u.Email, &u.IsAdmin); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, store.ErrRecordNotFound
+		}
+		return nil, err
+	}
+	return u, nil
+}

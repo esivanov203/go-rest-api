@@ -1,9 +1,11 @@
 package apiserver
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/esivanov203/go-rest-api/internal/model"
 	"github.com/esivanov203/go-rest-api/internal/store"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
@@ -11,8 +13,11 @@ import (
 )
 
 const (
-	sessionName = "session"
+	sessionName        = "ivanov"
+	ctxKeyUser  ctxKey = iota
 )
+
+type ctxKey int8
 
 type server struct {
 	router       *mux.Router
@@ -39,9 +44,40 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) configureRouter() {
+	s.router.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
 	s.router.HandleFunc("/users", s.handleUsersCreate()).Methods("POST")
 	s.router.HandleFunc("/sessions", s.handleSessionsCreate()).Methods("POST")
 
+	private := s.router.PathPrefix("/private").Subrouter()
+	private.Use(s.authenticateUser)
+	private.HandleFunc("/whoami", s.whoAmI()).Methods("GET")
+}
+
+/**
+ * middleware auth
+ */
+func (s *server) authenticateUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, err := s.sessionStore.Get(r, sessionName)
+		if err != nil {
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		id, ok := session.Values["user_id"]
+		if !ok {
+			s.error(w, r, http.StatusUnauthorized, ErrNotAuthenticated)
+			return
+		}
+
+		u, err := s.store.GetUserRepo().Find(id.(int))
+		if err != nil {
+			s.error(w, r, http.StatusUnauthorized, ErrNotAuthenticated)
+			return
+		}
+
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKeyUser, u)))
+	})
 }
 
 func (s *server) error(w http.ResponseWriter, r *http.Request, code int, err error) {
@@ -80,6 +116,12 @@ func (s *server) handleUsersCreate() http.HandlerFunc {
 	}
 }
 
+func (s *server) whoAmI() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.respond(w, r, http.StatusOK, r.Context().Value(ctxKeyUser).(*model.User))
+	}
+}
+
 func (s *server) handleSessionsCreate() http.HandlerFunc {
 	type request struct {
 		Email    string `json:"email"`
@@ -103,7 +145,7 @@ func (s *server) handleSessionsCreate() http.HandlerFunc {
 			s.error(w, r, http.StatusInternalServerError, err)
 		}
 		session.Values["user_id"] = u.ID
-		session.Options.MaxAge = 1
+		//session.Options.MaxAge = 1
 		if err := s.sessionStore.Save(r, w, session); err != nil {
 			s.error(w, r, http.StatusInternalServerError, err)
 		}
